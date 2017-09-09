@@ -312,7 +312,7 @@
                 wrap.style[prefixStyle.transitionDuration] = '0ms';
                 //强制刷新
                 this._getComputedTranslateX();
-                wrap.style[prefixStyle.transform] = 'translateX(-' + translateX + 'px) translateZ(0)';
+                wrap.style[prefixStyle.transform] = 'translateX(' + translateX + 'px) translateZ(0)';
             }else{
                 wrap.style.left = translateX+'px';
             }
