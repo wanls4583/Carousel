@@ -26,7 +26,7 @@
     var Carousel = {
         init: function(options) {
             var self = this;
-            prefixStyle = this._getPrefixStyle();
+            this.initDefault();
             container = options.container;
             wrap = options.wrap;
             dotsWrap = options.dotsWrap;
@@ -78,6 +78,14 @@
 
             this.bindArrowClickEvent();
             this.endCallBack();
+        },
+        initDefault: function(){
+            prefixStyle = this._getPrefixStyle();
+            if(prefixStyle.transitionProperty && prefixStyle.transform){
+                enableTransition = true;
+            }else if(!prefixStyle.transform){
+                enablePosition = true;
+            }
         },
         //创建dot
         createDots: function(carouselCount) {
@@ -281,25 +289,7 @@
         goTo: function(num){
             var self = this;
             var translateX = -num*parentWidth;
-            if(enableTransition){
-                time = duration * (Math.ceil(Math.abs(-translateX - this._getComputedTranslateX())) / parentWidth);
-                time = time>duration ? duration : time;
-                wrap.style[prefixStyle.transitionDuration] = time+'ms';
-                //强制刷新
-                this._getComputedTranslateX();
-                wrap.style[prefixStyle.transform] = 'translateX(-' + translateX + 'px) translateZ(0)';
-                self._startTransition();
-            }else if(enablePosition){
-                left = wrap.style.left;
-                left ? (left = Number(left.replace('px',''))) : left = 0;
-                time = duration * (Math.ceil(Math.abs(-translateX - left)) / parentWidth);
-                time = time>duration ? duration : time;
-                self._position(wrap,left,time);
-            }else{
-                wrap.style[prefixStyle.transitionDuration] = '0ms';
-                self._translation(wrap, -translateX, duration/2);
-            }
-            
+            this._translateX(translateX);
         },
         //根据index切换到(无过渡效果)
         goToNoTransition: function(num){
@@ -342,29 +332,7 @@
                 translateX = wrapWidth - parentWidth;
             }
 
-            if(enableTransition){
-            	time = duration * (Math.ceil(Math.abs(-translateX - this._getComputedTranslateX())) / parentWidth);
-                time = time>duration ? duration : time;
-            	wrap.style[prefixStyle.transitionDuration] = time+'ms';
-            	//强制刷新
-            	this._getComputedTranslateX();
-            	wrap.style[prefixStyle.transform] = 'translateX(-' + translateX + 'px) translateZ(0)';
-                self._startTransition();
-            }else if(enablePosition){
-            	left = wrap.style.left;
-        		left ? (left = Number(left.replace('px',''))) : left = 0;
-        		time = duration * (Math.ceil(Math.abs(-translateX - left)) / parentWidth);
-                time = time>duration ? duration : time;
-            	wrap.style[prefixStyle.transitionDuration] = '0ms';
-            	this._position(wrap,-translateX,time);
-            }else{
-            	wrap.style[prefixStyle.transitionDuration] = '0ms';
-            	self._translation(wrap, -translateX, duration/2);
-            }
-            
-            endTimeoutId = setTimeout(function() {
-            	self.endCallBack();
-            },duration+100)
+            this._translateX(translateX);
         },
         //向右切换
         toRight: function() {
@@ -382,37 +350,42 @@
             anicomplete = false;
             carouselCount--;
             translateX = parentWidth * carouselCount;
-
+            this._translateX(translateX);
+            
+        },
+        _translateX: function(translateX){
+            var self = this;
             if(enableTransition){
-            	time = duration * (Math.ceil(Math.abs(-translateX - this._getComputedTranslateX())) / parentWidth);
+                time = duration * (Math.ceil(Math.abs(-translateX - this._getComputedTranslateX())) / parentWidth);
                 time = time>duration ? duration : time;
-            	wrap.style[prefixStyle.transitionDuration] = time+'ms';
-            	//强制刷新
-            	this._getComputedTranslateX();
-            	wrap.style[prefixStyle.transform] = 'translateX(-' + translateX + 'px) translateZ(0)';
+                wrap.style[prefixStyle.transitionDuration] = time+'ms';
+                //强制刷新
+                this._getComputedTranslateX();
+                wrap.style[prefixStyle.transform] = 'translateX(-' + translateX + 'px) translateZ(0)';
                 self._startTransition();
+                //防止transitionend不响应
+                endTimeoutId = setTimeout(function() {
+                    self.endCallBack();
+                },duration+100)
             }else if(enablePosition){
-            	left = wrap.style.left;
-        		left ? (left = Number(left.replace('px',''))) : left = 0;
-        		time = duration * (Math.ceil(Math.abs(-translateX - left)) / parentWidth);
+                left = wrap.style.left;
+                left ? (left = Number(left.replace('px',''))) : left = 0;
+                time = duration * (Math.ceil(Math.abs(-translateX - left)) / parentWidth);
                 time = time>duration ? duration : time;
-            	wrap.style[prefixStyle.transitionDuration] = '0ms';
-            	this._position(wrap,-translateX,time);
+                wrap.style[prefixStyle.transitionDuration] = '0ms';
+                this._position(wrap,-translateX,time);
             }else{
-            	wrap.style[prefixStyle.transitionDuration] = '0ms';
-            	self._translation(wrap, -translateX, duration/2);
+                wrap.style[prefixStyle.transitionDuration] = '0ms';
+                self._translation(wrap, -translateX, duration/2);
             }
-            //防止endCallBack
-            endTimeoutId = setTimeout(function() {
-            	self.endCallBack();
-            },duration+100)
+
         },
         //过渡完成回调
        	endCallBack: function () {
 
        		var self = this;
        		var dom = null;
-            var left = 0;
+            var offsetX = 0;
             var cancelRAF = this._getCancelRAF();
 
             endTime = new Date().getTime();
@@ -426,14 +399,24 @@
             cancelRAF(rAFTimeoutId);
             clearTimeout(endTimeoutId);
             clearTimeout(autoTimeoutId);
-            autoTimeoutId = setTimeout(function() {
-                if (anicomplete) {
-                    if (direct == 'left')
-                        self.toLeft();
-                    else
-                        self.toRight();
-                }
-            }, stay);
+            if(enablePosition){
+                offsetX = this._getComputedStyle('left');
+                offsetX ? (offsetX = Number(offsetX.replace('px',''))) : offsetX = 0;
+            }else{
+                offsetX = this._getComputedTranslateX();
+            }
+            if(-carouselCount*parentWidth!=offsetX){
+                this._translateX(-carouselCount*parentWidth);
+            }else{
+                autoTimeoutId = setTimeout(function() {
+                    if (anicomplete) {
+                        if (direct == 'left')
+                            self.toLeft();
+                        else
+                            self.toRight();
+                    }
+                }, stay);
+            }
         },
         //跟踪transtion过渡
         _startTransition: function(){
