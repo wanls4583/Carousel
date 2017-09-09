@@ -10,6 +10,8 @@
     var enablePosition = false; //是否使用绝对定位切换动画
     var enableTouch = true; //是否允许触摸滑动
     var enableClick = true; //是否允许点击dot切换
+    var dotClassName = ''; //锚点类名
+    var activeClassName = ''; //激活的锚点类名
     var direct = 'right'; //轮播方向
     var autoTimeoutId = null; //自动轮播计时器
     var endTimeoutId = null; //动画过渡完成计时器,防止ios qq内置浏览器有时偶尔不触发transitionEnd的bug
@@ -34,10 +36,13 @@
             rightArrow = options.rightArrow;
             duration = options.duration||1000;
             stay = options.stay||3000;
+            activeClassName = options.activeClassName;
+            dotClassName = options.dotClassName;
             options.enableTouch!=undefined && (enableTouch = options.enableTouch);
             options.enableTransition!=undefined && (enableTransition = options.enableTransition);
             options.enablePosition!=undefined && (enablePosition = options.enablePosition);
             options.enableClick!=undefined && (enableClick = options.enableClick);
+            options.activeClassName
             wrapWidth = wrap.scrollWidth;
             parentWidth = container.clientWidth;
             maxCount = Math.ceil(wrapWidth / parentWidth) - 1;
@@ -92,9 +97,9 @@
         	var html = '';
             for (var i = 0; i < carouselCount; i++) {
                 if (i == 0) {
-                    html+='<div class="dot active"></div>';
+                    html+='<div class="'+dotClassName+' '+activeClassName+'"></div>';
                 } else {
-                    html+='<div class="dot"></div>';
+                    html+='<div class="'+dotClassName+'"></div>';
                 }
             }
             dotsWrap.innerHTML = html;
@@ -111,15 +116,15 @@
                 }
                 num = Math.floor((Math.abs(offsetX)+parentWidth/2)/parentWidth);
             }
-            dom = dotsWrap.getElementsByClassName('active')[0];
+            dom = dotsWrap.getElementsByClassName(activeClassName)[0];
             if(dom){
-                dom.className = 'dot';
+                dom.className = dotClassName;
             }
-            dotsWrap.getElementsByClassName('dot')[num].className = 'dot active';
+            dotsWrap.getElementsByClassName(dotClassName)[num].className = dotClassName+' '+activeClassName;
         },
         bindDotClickEvent: function(){
             var self = this;
-            var dots = dotsWrap.getElementsByClassName('dot');
+            var dots = dotsWrap.getElementsByClassName(dotClassName);
             var length = dots.length;
             for(var i=0; i<length; i++){
                 dots[i].addEventListener('touchstart',function(event){
@@ -138,7 +143,6 @@
         //绑定左右箭头切换事件
         bindArrowClickEvent: function(){
             var self = this;
-            var cancelRAF =  this._getCancelRAF();
             var offsetX = 0;
             if(leftArrow){
                 leftArrow.addEventListener('touchstart',function(event){
@@ -171,9 +175,7 @@
                 })
             }
             function _stop(){
-                cancelRAF(rAFTimeoutId);
-                clearTimeout(autoTimeoutId);
-                clearTimeout(endTimeoutId);
+                self.clearAllTimeoutId();
                 if(!enablePosition){
                     wrap.style[prefixStyle.transitionDuration] = '0ms';
                     translateX = self._getComputedTranslateX();
@@ -194,12 +196,9 @@
             var startX = 0;
             var translateX = 0;
             var left = 0;
-            var cancelRAF = this._getCancelRAF();
             container.addEventListener('touchstart', function(event) {
             	event.preventDefault();
-                cancelRAF(rAFTimeoutId);
-            	clearTimeout(autoTimeoutId);
-            	clearTimeout(endTimeoutId);
+                self.clearAllTimeoutId();
                 bannerClick = false;
                 startX = event.touches[0].pageX;
                 if(!enablePosition){
@@ -294,10 +293,7 @@
         //根据index切换到(无过渡效果)
         goToNoTransition: function(num){
             var translateX = -num*parentWidth;
-            var cancelRAF = this._getCancelRAF();
-            cancelRAF(rAFTimeoutId);
-            clearTimeout(autoTimeoutId);
-            clearTimeout(endTimeoutId);
+            this.clearAllTimeoutId();
             if(!enablePosition){
                 wrap.style[prefixStyle.transitionDuration] = '0ms';
                 //强制刷新
@@ -313,16 +309,13 @@
        	//向右切换
        	toLeft: function() {
             if (carouselCount >= maxCount) return;
-
-            var self = this;
             var translateX = 0;
             var style = null;
             var startX = 0;
             var time = 0;
             var left = 0;
 
-            clearTimeout(autoTimeoutId);
-            clearTimeout(endTimeoutId);
+            this.clearAllTimeoutId();
             anicomplete = false;
             carouselCount++;
 
@@ -336,17 +329,13 @@
         },
         //向右切换
         toRight: function() {
-
             if (carouselCount <= 0) return;
-
-            var self = this;
             var translateX = 0;
             var style = null;
             var time = 0;
             var left = 0;
 
-            clearTimeout(autoTimeoutId);
-            clearTimeout(endTimeoutId);
+            this.clearAllTimeoutId();
             anicomplete = false;
             carouselCount--;
             translateX = parentWidth * carouselCount;
@@ -386,7 +375,6 @@
        		var self = this;
        		var dom = null;
             var offsetX = 0;
-            var cancelRAF = this._getCancelRAF();
 
             endTime = new Date().getTime();
             anicomplete = true;
@@ -396,9 +384,7 @@
             } else if (carouselCount == maxCount) {
                 direct = 'right';
             }
-            cancelRAF(rAFTimeoutId);
-            clearTimeout(endTimeoutId);
-            clearTimeout(autoTimeoutId);
+            this.clearAllTimeoutId();
             if(enablePosition){
                 offsetX = this._getComputedStyle('left');
                 offsetX ? (offsetX = Number(offsetX.replace('px',''))) : offsetX = 0;
@@ -503,6 +489,12 @@
                     }
                 })
             }
+        },
+        clearAllTimeoutId: function(){
+            var cancelRAF = this._getCancelRAF();
+            cancelRAF(rAFTimeoutId);
+            clearTimeout(autoTimeoutId);
+            clearTimeout(endTimeoutId);
         },
         //获取css前缀
         _getPrefixStyle: function() {
