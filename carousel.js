@@ -22,7 +22,6 @@
     var prefixStyle = null;
     var bannerClick = false;
     var endTime = new Date().getTime();
-    var preDotNum = 0;
 
     var Carousel = {
         init: function(options) {
@@ -95,23 +94,20 @@
         //激活dot
         activeDot: function(num){
             var offsetX = 0;
-            if(!num){
-                if(!enablePosition){
-                    offsetX = this._getComputedTranslateX();
-                }else{
+            if(!num && num!=0){
+                if(enablePosition){
                     offsetX = this._getComputedStyle('left');
                     offsetX ? (offsetX = Number(offsetX.replace('px',''))) : offsetX = 0;
+                }else{
+                    offsetX = this._getComputedTranslateX();
                 }
                 num = Math.floor((Math.abs(offsetX)+parentWidth/2)/parentWidth);
-                if(num!=preDotNum){
-                    dom = dotsWrap.getElementsByClassName('active')[0];
-                    if(dom){
-                        dom.className = 'dot';
-                    }
-                    dotsWrap.getElementsByClassName('dot')[num].className = 'dot active';
-                    preDotNum = num;
-                }
             }
+            dom = dotsWrap.getElementsByClassName('active')[0];
+            if(dom){
+                dom.className = 'dot';
+            }
+            dotsWrap.getElementsByClassName('dot')[num].className = 'dot active';
         },
         bindDotClickEvent: function(){
             var self = this;
@@ -167,7 +163,6 @@
                 })
             }
             function _stop(){
-                stopAnimation = true;
                 cancelRAF(rAFTimeoutId);
                 clearTimeout(autoTimeoutId);
                 clearTimeout(endTimeoutId);
@@ -293,6 +288,7 @@
                 //强制刷新
                 this._getComputedTranslateX();
                 wrap.style[prefixStyle.transform] = 'translateX(-' + translateX + 'px) translateZ(0)';
+                self._startTransition();
             }else if(enablePosition){
                 left = wrap.style.left;
                 left ? (left = Number(left.replace('px',''))) : left = 0;
@@ -353,6 +349,7 @@
             	//强制刷新
             	this._getComputedTranslateX();
             	wrap.style[prefixStyle.transform] = 'translateX(-' + translateX + 'px) translateZ(0)';
+                self._startTransition();
             }else if(enablePosition){
             	left = wrap.style.left;
         		left ? (left = Number(left.replace('px',''))) : left = 0;
@@ -393,6 +390,7 @@
             	//强制刷新
             	this._getComputedTranslateX();
             	wrap.style[prefixStyle.transform] = 'translateX(-' + translateX + 'px) translateZ(0)';
+                self._startTransition();
             }else if(enablePosition){
             	left = wrap.style.left;
         		left ? (left = Number(left.replace('px',''))) : left = 0;
@@ -415,7 +413,8 @@
        		var self = this;
        		var dom = null;
             var left = 0;
-            
+            var cancelRAF = this._getCancelRAF();
+
             endTime = new Date().getTime();
             anicomplete = true;
             this.activeDot(carouselCount);
@@ -424,6 +423,7 @@
             } else if (carouselCount == maxCount) {
                 direct = 'right';
             }
+            cancelRAF(rAFTimeoutId);
             clearTimeout(endTimeoutId);
             clearTimeout(autoTimeoutId);
             autoTimeoutId = setTimeout(function() {
@@ -435,6 +435,19 @@
                 }
             }, stay);
         },
+        //跟踪transtion过渡
+        _startTransition: function(){
+            var rAF = this._getRAF();
+            var self = this;
+            rAF(translate);
+            function translate() {
+                rAFTimeoutId = rAF(function() {
+                    translate();
+                    self.activeDot();
+                })
+            }
+        },
+        //定位实现切换
         _position: function(dom,offsetX,duration){
         	var self = this;
             var rAF = this._getRAF();
@@ -443,10 +456,10 @@
             var dtX = 0;
             var left = 0;
             var sign = 1;
+            var now = new Date().getTime();
             startX = self._getComputedStyle('left');
         	startX ? (startX = Number(startX.replace('px',''))) : startX = 0;
-            sign = (offsetX - startX)<0 ? -1 : 1;
-            dtX = (1000 / 60) / duration * parentWidth * sign;
+            dtX = (1000 / 60) / duration * (offsetX - startX);
             rAF(translate);
             function translate() {
                 rAFTimeoutId = rAF(function() {
@@ -462,15 +475,13 @@
                     } else {
                         rAF(function() {
                             dom.style.left = offsetX + 'px';;
-                            if (typeof endCallBack === 'function') {
-                                self.endCallBack();
-                            }
+                            self.endCallBack();
                         })
                     }
                 })
             }
         },
-        //js实现过度效果
+        //变化实现切换
         _translation: function(dom, offsetX, duration) {
         	var self = this;
             var rAF = window.requestAnimationFrame ||
@@ -485,8 +496,7 @@
             var translateX = 0;
             var sign = 1;
             startX = this._getComputedTranslateX();
-            sign = (offsetX - startX)<0 ? -1 : 1;
-            dtX = (1000 / 60) / duration * parentWidth * sign;
+            dtX = (1000 / 60) / duration * (offsetX - startX);
             rAF(translate);
 
             function translate() {
