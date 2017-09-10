@@ -65,10 +65,10 @@
             }
 
             if(enableTransition){
-            	container.addEventListener('webkitTransitionEnd',function(){
+            	this._addEvent(container,'webkitTransitionEnd',function(){
 	            	self.endCallBack();
 	            })
-	            container.addEventListener('transitionend',function(){
+	            this._addEvent(container,'transitionend',function(){
 	            	self.endCallBack();
 	            })
             }
@@ -127,14 +127,9 @@
             var dots = dotsWrap.getElementsByClassName(dotClassName);
             var length = dots.length;
             for(var i=0; i<length; i++){
-                dots[i].addEventListener('touchstart',function(event){
-                    event.stopPropagation();
-                })
-                dots[i].addEventListener('touchend',function(event){
-                    event.stopPropagation();
-                });
                 (function(num){
-                    dots[num].addEventListener('click',function(){
+                    self._bindClickEvent(dots[num],function(event){
+                        self._stopPropagation(event);
                         self.goToNoTransition(num);
                     })
                 })(i)
@@ -145,14 +140,8 @@
             var self = this;
             var offsetX = 0;
             if(leftArrow){
-                leftArrow.addEventListener('touchstart',function(event){
-                    event.stopPropagation();
-                })
-                leftArrow.addEventListener('touchend',function(event){
-                    event.stopPropagation();
-                })
-                leftArrow.addEventListener('click',function(event){
-                    event.stopPropagation();
+                self._bindClickEvent(leftArrow,function(event){
+                    self._stopPropagation(event);
                     if(carouselCount<maxCount){
                         _stop();
                         self.toLeft();
@@ -160,14 +149,8 @@
                 })
             }
             if(rightArrow){
-                rightArrow.addEventListener('touchstart',function(event){
-                    event.stopPropagation();
-                })
-                rightArrow.addEventListener('touchend',function(event){
-                    event.stopPropagation();
-                })
-                rightArrow.addEventListener('click',function(){
-                    event.stopPropagation();
+                self._bindClickEvent(rightArrow,function(event){
+                    self._stopPropagation(event);
                     if(carouselCount>0){
                         _stop();
                         self.toRight();
@@ -175,7 +158,7 @@
                 })
             }
             function _stop(){
-                self.clearAllTimeoutId();
+                self._clearAllTimeoutId();
                 if(!enablePosition){
                     wrap.style[prefixStyle.transitionDuration] = '0ms';
                     translateX = self._getComputedTranslateX();
@@ -196,9 +179,8 @@
             var startX = 0;
             var translateX = 0;
             var left = 0;
-            container.addEventListener('touchstart', function(event) {
-            	event.preventDefault();
-                self.clearAllTimeoutId();
+            this._addEvent(container,'touchstart', function(event) {
+                self._clearAllTimeoutId();
                 bannerClick = false;
                 startX = event.touches[0].pageX;
                 if(!enablePosition){
@@ -211,10 +193,10 @@
                 	left ? (left = Number(left.replace('px',''))) : left = 0;
                 	wrap.style.left = left+'px';
                 }
-                
             })
-            container.addEventListener('touchmove', function(event) {
-            	event.preventDefault();
+            this._addEvent(container,'touchmove', function(event) {
+                //防止ios下拉
+            	self._preventDefault(event);
                 var dtX = event.touches[0].pageX - startX;
                 var _translateX =  translateX+dtX>0 ? 0 : translateX+dtX;
                 var _left =  left+dtX>0 ? 0 : left+dtX;
@@ -225,10 +207,8 @@
                 }else{
                 	wrap.style.left = _left+'px';
                 }
-                
             })
-            container.addEventListener('touchend', function(event) {
-            	event.preventDefault();
+            this._addEvent(container,'touchend', function(event) {
                 if(!enablePosition){
                 	translateX = self._getComputedTranslateX();
 	                next(translateX);
@@ -287,13 +267,13 @@
         //根据index切换到
         goTo: function(num){
             var self = this;
-            var translateX = -num*parentWidth;
+            var translateX = num*parentWidth;
             this._translateX(translateX);
         },
         //根据index切换到(无过渡效果)
         goToNoTransition: function(num){
             var translateX = -num*parentWidth;
-            this.clearAllTimeoutId();
+            this._clearAllTimeoutId();
             if(!enablePosition){
                 wrap.style[prefixStyle.transitionDuration] = '0ms';
                 //强制刷新
@@ -308,14 +288,17 @@
         },
        	//向右切换
        	toLeft: function() {
-            if (carouselCount >= maxCount) return;
+            if (carouselCount >= maxCount){
+                this.endCallBack();
+                return;
+            };
             var translateX = 0;
             var style = null;
             var startX = 0;
             var time = 0;
             var left = 0;
 
-            this.clearAllTimeoutId();
+            this._clearAllTimeoutId();
             anicomplete = false;
             carouselCount++;
 
@@ -329,45 +312,21 @@
         },
         //向右切换
         toRight: function() {
-            if (carouselCount <= 0) return;
+            if (carouselCount <= 0){
+                this.endCallBack();
+                return;
+            }
             var translateX = 0;
             var style = null;
             var time = 0;
             var left = 0;
 
-            this.clearAllTimeoutId();
+            this._clearAllTimeoutId();
             anicomplete = false;
             carouselCount--;
             translateX = parentWidth * carouselCount;
             this._translateX(translateX);
             
-        },
-        _translateX: function(translateX){
-            var self = this;
-            if(enableTransition){
-                time = duration * (Math.ceil(Math.abs(-translateX - this._getComputedTranslateX())) / parentWidth);
-                time = time>duration ? duration : time;
-                wrap.style[prefixStyle.transitionDuration] = time+'ms';
-                //强制刷新
-                this._getComputedTranslateX();
-                wrap.style[prefixStyle.transform] = 'translateX(-' + translateX + 'px) translateZ(0)';
-                self._startTransition();
-                //防止transitionend不响应
-                endTimeoutId = setTimeout(function() {
-                    self.endCallBack();
-                },duration+100)
-            }else if(enablePosition){
-                left = wrap.style.left;
-                left ? (left = Number(left.replace('px',''))) : left = 0;
-                time = duration * (Math.ceil(Math.abs(-translateX - left)) / parentWidth);
-                time = time>duration ? duration : time;
-                wrap.style[prefixStyle.transitionDuration] = '0ms';
-                this._position(wrap,-translateX,time);
-            }else{
-                wrap.style[prefixStyle.transitionDuration] = '0ms';
-                self._translation(wrap, -translateX, duration/2);
-            }
-
         },
         //过渡完成回调
        	endCallBack: function () {
@@ -384,7 +343,7 @@
             } else if (carouselCount == maxCount) {
                 direct = 'right';
             }
-            this.clearAllTimeoutId();
+            this._clearAllTimeoutId();
             if(enablePosition){
                 offsetX = this._getComputedStyle('left');
                 offsetX ? (offsetX = Number(offsetX.replace('px',''))) : offsetX = 0;
@@ -392,7 +351,7 @@
                 offsetX = this._getComputedTranslateX();
             }
             if(-carouselCount*parentWidth!=offsetX){
-                this._translateX(-carouselCount*parentWidth);
+                this._translateX(carouselCount*parentWidth);
             }else{
                 autoTimeoutId = setTimeout(function() {
                     if (anicomplete) {
@@ -490,11 +449,74 @@
                 })
             }
         },
-        clearAllTimeoutId: function(){
+        //x轴平移
+        _translateX: function(translateX){
+            var self = this;
+            if(enableTransition){
+                time = duration * (Math.ceil(Math.abs(-translateX - this._getComputedTranslateX())) / parentWidth);
+                time = time>duration ? duration : time;
+                wrap.style[prefixStyle.transitionDuration] = time+'ms';
+                //强制刷新
+                this._getComputedTranslateX();
+                wrap.style[prefixStyle.transform] = 'translateX(-' + translateX + 'px) translateZ(0)';
+                self._startTransition();
+                //防止transitionend不响应
+                endTimeoutId = setTimeout(function() {
+                    self.endCallBack();
+                },duration+100)
+            }else if(enablePosition){
+                left = wrap.style.left;
+                left ? (left = Number(left.replace('px',''))) : left = 0;
+                time = duration * (Math.ceil(Math.abs(-translateX - left)) / parentWidth);
+                time = time>duration ? duration : time;
+                wrap.style[prefixStyle.transitionDuration] = '0ms';
+                this._position(wrap,-translateX,time);
+            }else{
+                wrap.style[prefixStyle.transitionDuration] = '0ms';
+                self._translation(wrap, -translateX, duration/2);
+            }
+
+        },
+        _clearAllTimeoutId: function(){
             var cancelRAF = this._getCancelRAF();
             cancelRAF(rAFTimeoutId);
             clearTimeout(autoTimeoutId);
             clearTimeout(endTimeoutId);
+        },
+        //兼容ios冒泡,banner.click 阻止默认事件后，将不会触发子元素的点击
+        _bindClickEvent: function(dom,fn){
+            var self = this;
+            this._addEvent(dom,'touchstart',function(event){
+                self._stopPropagation(event);
+                self._stopPropagation(event);
+            })
+            this._addEvent(dom,'touchmove',function(event){
+                self._preventDefault(event);
+                self._stopPropagation(event);
+            })
+            this._addEvent(dom,'touchend',function(event){
+                self._stopPropagation(event);
+            })
+            this._addEvent(dom,'click',fn);
+        },
+        _addEvent: function(ele,event_name, func){
+            if(window.attachEvent){
+                ele.attachEvent('on'+event_name, func);
+            }
+            else{
+                ele.addEventListener(event_name, func, false);    //默认事件是冒泡
+            }
+        },
+        _stopPropagation: function(e){
+            if (e && e.stopPropagation) {//非IE   
+                 e.stopPropagation(); 
+             }   
+             else {//IE   
+                 window.event.cancelBubble = true;   
+             } 
+        },
+        _preventDefault: function(e){
+            e.preventDefault ? e.preventDefault() : (e.returnValue = false);
         },
         //获取css前缀
         _getPrefixStyle: function() {
