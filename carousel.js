@@ -268,6 +268,7 @@
         goTo: function(num){
             var self = this;
             var translateX = num*parentWidth;
+            anicomplete = false;
             this._translateX(translateX);
         },
         //根据index切换到(无过渡效果)
@@ -336,7 +337,6 @@
             var offsetX = 0;
 
             endTime = new Date().getTime();
-            anicomplete = true;
             this.activeDot(carouselCount);
             if (carouselCount == 0) {
                 direct = 'left';
@@ -353,6 +353,7 @@
             if(-carouselCount*parentWidth!=offsetX){
                 this._translateX(carouselCount*parentWidth);
             }else{
+                anicomplete = true;
                 autoTimeoutId = setTimeout(function() {
                     if (anicomplete) {
                         if (direct == 'left')
