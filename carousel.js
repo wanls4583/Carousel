@@ -17,13 +17,13 @@
     var endTimeoutId = null; //动画过渡完成计时器,防止ios qq内置浏览器有时偶尔不触发transitionEnd的bug
     var rAFTimeoutId = null; //帧动画
     var anicomplete = true; //动画播放完成
-    var carouselCount = 0;
-    var maxCount;
-    var parentWidth = 0;
-    var wrapWidth = 0;
-    var prefixStyle = null;
-    var bannerClick = false;
-    var endTime = new Date().getTime();
+    var carouselCount = 0; //当前移动位置
+    var maxCount;  //最大的移动位置
+    var parentWidth = 0; //父容器宽度
+    var wrapWidth = 0;  //轮播对象宽度
+    var prefixStyle = null; //css3前缀
+    var bannerClick = false; //是否点击了banner
+    var endTime = new Date().getTime(); //动画结束后的时间戳
 
     var Carousel = {
         init: function(options) {
@@ -489,7 +489,6 @@
             var self = this;
             this._addEvent(dom,'touchstart',function(event){
                 self._stopPropagation(event);
-                self._stopPropagation(event);
             })
             this._addEvent(dom,'touchmove',function(event){
                 self._preventDefault(event);
@@ -522,9 +521,7 @@
         //获取css前缀
         _getPrefixStyle: function() {
             var _elementStyle = document.createElement('div').style;
-            /**
-             * 判断CSS 属性样式前缀
-             */
+            
             var _vendor = (function() {
                 var vendors = ['t', 'webkitT', 'MozT', 'msT', 'OT'],
                     transform,
@@ -536,17 +533,13 @@
                 }
                 return false;
             })();
-            /**
-             * 获取CSS 前缀
-             * @param style
-             * @returns {*} 返回CSS3兼容性前缀
-             * @private
-             */
+            
             function _prefixStyle(style) {
                 if (_vendor === false) return false;
                 if (_vendor === '') return style;
                 return _vendor + style.charAt(0).toUpperCase() + style.substr(1);
             }
+
             var _transform = _prefixStyle('transform');
             var style = {
                 transform: _transform,
@@ -573,6 +566,7 @@
         	var style = style = window.getComputedStyle ?window.getComputedStyle(wrap, null) : null || wrap.currentStyle;
             return style[property];
         },
+        //获取requestAnimationFrame帧函数
         _getRAF: function(){
             var rAF = window.requestAnimationFrame ||
                 window.webkitRequestAnimationFrame ||
@@ -590,6 +584,7 @@
                 return function(callback) { window.setTimeout(callback, 1000 / 60); };
             }
         },
+        //获取cancelAnimationFrame取消帧函数
         _getCancelRAF: function(){
             var rAF = window.requestAnimationFrame ||
                 window.webkitRequestAnimationFrame ||
