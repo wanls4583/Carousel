@@ -1,5 +1,5 @@
-(function(window) {
-    function Carousel() {
+// define(function() {
+    function Carousel(options) {
         var duration = 0; //切换时长ms
         var stay = 0; //停留时长ms
         var container = null; //外部容器
@@ -16,7 +16,9 @@
         var direct = 'right'; //轮播方向
         var autoTimeoutId = null; //自动轮播计时器
         var endTimeoutId = null; //动画过渡完成计时器,防止ios qq内置浏览器有时偶尔不触发transitionEnd的bug
-        var rAFTimeoutId = null; //帧动画
+        var rAFTimeoutId1 = null; //跟踪transtion过渡计时器
+        var rAFTimeoutId2 = null; //定位实现切换计时器
+        var rAFTimeoutId3 = null; //变化实现切换计时器
         var anicomplete = true; //动画播放完成
         var carouselCount = 0; //当前移动位置
         var maxCount; //最大的移动位置
@@ -25,7 +27,7 @@
         var prefixStyle = null; //css3前缀
         var bannerClick = false; //是否点击了banner
         var endTime = new Date().getTime(); //动画结束后的时间戳
-
+        var isWindowFocus = true;
         var CarouselObj = {
             init: function(options) {
                 var self = this;
@@ -72,6 +74,12 @@
                     this._addEvent(container, 'transitionend', function() {
                         self.endCallBack();
                     })
+                    this._addEvent(container, 'oTransitionEnd', function() {
+                        self.endCallBack();
+                    })
+                    this._addEvent(container, 'MSTransitionEnd', function() {
+                        self.endCallBack();
+                    })
                 }
 
                 if (enableTouch) {
@@ -84,6 +92,16 @@
 
                 this.bindArrowClickEvent();
                 this.endCallBack();
+                function onVisibilityChanged(event) {
+                    var hidden = event.target.hidden;
+                    if (hidden){
+                        isWindowFocus = false;
+                    }else{
+                        isWindowFocus = true;
+                        self.endCallBack();
+                    }
+                }
+                document.addEventListener("visibilitychange", onVisibilityChanged, false);
             },
             initDefault: function() {
                 prefixStyle = this._getPrefixStyle();
@@ -121,7 +139,10 @@
                 if (dom) {
                     dom.className = dotClassName;
                 }
-                dotsWrap.getElementsByClassName(dotClassName)[num].className = dotClassName + ' ' + activeClassName;
+                //防止当前容器删除后报错
+                if(dotsWrap.getElementsByClassName(dotClassName)[num]){
+                    dotsWrap.getElementsByClassName(dotClassName)[num].className = dotClassName + ' ' + activeClassName;
+                }
             },
             bindDotClickEvent: function() {
                 var self = this;
@@ -199,6 +220,7 @@
                 this._addEvent(container, 'touchmove', function(event) {
                     //防止ios下拉
                     self._preventDefault(event);
+                    self._stopPropagation(event);
                     var dtX = event.touches[0].pageX - startX;
                     var _translateX = translateX + dtX > 0 ? 0 : translateX + dtX;
                     var _left = left + dtX > 0 ? 0 : left + dtX;
@@ -334,7 +356,11 @@
             },
             //过渡完成回调
             endCallBack: function() {
-
+                //如果容器已被删除，停止轮播
+                if(!wrap.isConnected){
+                    this._clearAllTimeoutId();
+                    return;
+                }
                 var self = this;
                 var dom = null;
                 var offsetX = 0;
@@ -354,6 +380,13 @@
                     offsetX = this._getComputedTranslateX();
                 }
                 if (-carouselCount * parentWidth != offsetX) {
+                    if (!enablePosition) {
+                        wrap.style[prefixStyle.transitionDuration] = '0ms';
+                        wrap.style[prefixStyle.transform] = 'translateX(' + offsetX + 'px) translateZ(0)';
+                    } else {
+                        wrap.style[prefixStyle.transitionDuration] = '0ms';
+                        wrap.style.left = offsetX + 'px';
+                    }
                     this._translateX(carouselCount * parentWidth);
                 } else {
                     anicomplete = true;
@@ -374,7 +407,7 @@
                 rAF(translate);
 
                 function translate() {
-                    rAFTimeoutId = rAF(function() {
+                    rAFTimeoutId1 = rAF(function() {
                         translate();
                         self.activeDot();
                     })
@@ -396,7 +429,7 @@
                 rAF(translate);
 
                 function translate() {
-                    rAFTimeoutId = rAF(function() {
+                    rAFTimeoutId2 = rAF(function() {
                         left = wrap.style.left;
                         left ? left = Number(left.replace('px', '')) : left = 0;
                         left > 0 && (left = 0);
@@ -434,7 +467,7 @@
                 rAF(translate);
 
                 function translate() {
-                    rAFTimeoutId = rAF(function() {
+                    rAFTimeoutId3 = rAF(function() {
                         var matrix = dom.style[prefixStyle.transform];
                         if (matrix) {
                             translateX = Number(matrix.replace(/translateX\(|px\)[\s\S]*$/g, ''));
@@ -485,7 +518,9 @@
             },
             _clearAllTimeoutId: function() {
                 var cancelRAF = this._getCancelRAF();
-                cancelRAF(rAFTimeoutId);
+                cancelRAF(rAFTimeoutId1);
+                cancelRAF(rAFTimeoutId2);
+                cancelRAF(rAFTimeoutId3);
                 clearTimeout(autoTimeoutId);
                 clearTimeout(endTimeoutId);
             },
@@ -566,7 +601,7 @@
             },
             //获取计算后的left值
             _getComputedStyle: function(property) {
-                var style = style = window.getComputedStyle ? window.getComputedStyle(wrap, null) : null || wrap.currentStyle;
+                var style = window.getComputedStyle ? window.getComputedStyle(wrap, null) : null || wrap.currentStyle;
                 return style[property];
             },
             //获取requestAnimationFrame帧函数
@@ -606,14 +641,10 @@
                 }
             }
         }
+        if(options){
+            CarouselObj.init(options);
+        }
         return CarouselObj;
     }
-    if (typeof define === 'function') {
-        define(function() {
-            return Carousel;
-        })
-    } else {
-        window.Carousel = Carousel;
-    }
-
-})(window);
+//     return Carousel;
+// })
