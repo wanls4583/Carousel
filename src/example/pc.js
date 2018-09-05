@@ -6,7 +6,10 @@ window.onload = function(){
 		leftArrow: document.querySelector('.d1 .left'),
 		rightArrow: document.querySelector('.d1 .right'),
 		container: document.querySelector('.d1 .carousel'),
-		wrap: document.querySelector('.d1 .wrap')
+		wrap: document.querySelector('.d1 .wrap'),
+		dotsWrap: document.querySelector('.d1 .dots'),
+		dotClassName: 'dot',
+		activeClassName: 'active'
 	});
 
 	new Carousel({
@@ -22,6 +25,9 @@ window.onload = function(){
 		leftArrow: document.querySelector('.d3 .left'),
 		rightArrow: document.querySelector('.d3 .right'),
 		container: document.querySelector('.d3 .carousel'),
-		wrap: document.querySelector('.d3 .wrap')
+		wrap: document.querySelector('.d3 .wrap'),
+		dotsWrap: document.querySelector('.d3 .dots'),
+		dotClassName: 'dot',
+		activeClassName: 'active'
 	});
 }

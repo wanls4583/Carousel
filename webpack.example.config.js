@@ -1,6 +1,5 @@
 var path = require('path');
 var HtmlWebpackPlugin = require('html-webpack-plugin');
-var uglify = require('uglifyjs-webpack-plugin');
 var CopyWebpackPlugin = require('copy-webpack-plugin');
 
 // 拼接我们的工作区路径为一个绝对路径
@@ -9,9 +8,10 @@ function resolve(dir) {
 }
 
 module.exports = {
-    devtool: '#cheap-module-eval-source-map',
+    devtool: '#source-map',
     entry: {
         'pc': './src/example/pc.js',
+        'mobile': './src/example/mobile.js',
     },
     output: {
         // 编译输出的根路径
@@ -44,10 +44,15 @@ module.exports = {
             chunks: ['pc'],
             inject: true 
         }),
+        new HtmlWebpackPlugin({
+            filename: 'mobile.html',
+            template: resolve('src/example/mobile.html'),
+            chunks: ['mobile'],
+            inject: true 
+        }),
         new CopyWebpackPlugin([{
             from: resolve('src/example/img'),
             to: resolve('dist/example/img/')
-        }]),
-        new uglify()
+        }])
     ]
 }

@@ -40,8 +40,8 @@ class Carousel {
         this.rightArrow = options.rightArrow;
         this.duration = options.duration || 1000;
         this.stay = options.stay || 3000;
-        this.activeClassName = options.activeClassName;
-        this.dotClassName = options.dotClassName;
+        this.activeClassName = options.activeClassName || 'dot';
+        this.dotClassName = options.dotClassName || 'active';
         this.multi = options.multi;
         options.enableTouch != undefined && (this.enableTouch = options.enableTouch);
         options.usePosition != undefined && (this.usePosition = options.usePosition);
@@ -118,7 +118,7 @@ class Carousel {
     }
     //创建锚点
     createDots(carouselCount) {
-        if(!this.dotsWrap){
+        if(!this.dotsWrap || this.multi){
             return;
         }
         var html = '';
@@ -134,11 +134,11 @@ class Carousel {
     //激活当前锚点
     activeDot(num) {
         var offsetX = 0;
-        if(!this.dotsWrap){
+        if(!this.dotsWrap || this.multi){
             return;
         }
         if (!num && num != 0) {
-            if (usePosition) {
+            if (this.usePosition) {
                 offsetX = this._getComputedStyle('left');
                 offsetX ? (offsetX = Number(offsetX.replace('px', ''))) : offsetX = 0;
             } else {
@@ -157,7 +157,7 @@ class Carousel {
     }
     //绑定锚点点击事件
     bindDotClickEvent() {
-        if(!this.dotsWrap){
+        if(!this.dotsWrap || this.multi){
             return;
         }
         var self = this;

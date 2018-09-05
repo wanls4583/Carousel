@@ -11,7 +11,8 @@ function resolve(dir) {
 module.exports = {
     devtool: '#cheap-module-eval-source-map',
     entry: {
-        'pc': './src/example/pc.js'
+        'pc': './src/example/pc.js',
+        'mobile': './src/example/mobile.js'
     },
     output: {
         // 编译输出的根路径
@@ -50,6 +51,12 @@ module.exports = {
             filename: 'pc.html',
             template: resolve('src/example/pc.html'),
             chunks: ['pc'],
+            inject: true
+        }),
+        new HtmlWebpackPlugin({
+            filename: 'mobile.html',
+            template: resolve('src/example/mobile.html'),
+            chunks: ['mobile'],
             inject: true
         }),
         new CopyWebpackPlugin([{
