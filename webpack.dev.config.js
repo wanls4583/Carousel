@@ -1,6 +1,7 @@
 var path = require('path');
 var HtmlWebpackPlugin = require('html-webpack-plugin');
 var webpack = require('webpack');
+var CopyWebpackPlugin = require('copy-webpack-plugin');
 
 // 拼接我们的工作区路径为一个绝对路径
 function resolve(dir) {
@@ -10,7 +11,7 @@ function resolve(dir) {
 module.exports = {
     devtool: '#cheap-module-eval-source-map',
     entry: {
-        'demo': './src/example/demo.js'
+        'pc': './src/example/pc.js'
     },
     output: {
         // 编译输出的根路径
@@ -46,10 +47,14 @@ module.exports = {
     },
     plugins: [
         new HtmlWebpackPlugin({
-            filename: 'demo1.html',
-            template: resolve('src/example/demo1.html'),
-            chunks: ['demo1'],
-            inject: true 
-        })
+            filename: 'pc.html',
+            template: resolve('src/example/pc.html'),
+            chunks: ['pc'],
+            inject: true
+        }),
+        new CopyWebpackPlugin([{
+            from: resolve('src/example/img/'),
+            to: resolve('dist/example/img/')
+        }])
     ]
 }
