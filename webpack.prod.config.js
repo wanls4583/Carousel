@@ -7,6 +7,7 @@ function resolve(dir) {
 }
 
 module.exports = {
+    devtool: '#source-map',
     entry: {
         'carousel': './index.js',
     },
@@ -32,6 +33,8 @@ module.exports = {
         }]
     },
     plugins: [
-        new uglify()
+        new uglify({
+             sourceMap: true
+        })
     ]
 }
