@@ -8,8 +8,8 @@ class Carousel {
         this.dotsWrap = null; //锚点
         this.leftArrow = null; //左箭头
         this.rightArrow = null; //右箭头
-        this.enableTransition = false; //是否使用css3过度切换动画
-        this.enablePosition = false; //是否使用绝对定位切换动画
+        this.useTransition = false; //是否使用css3过度切换动画
+        this.usePosition = false; //是否使用绝对定位切换动画
         this.enableTouch = true; //是否允许触摸滑动
         this.enableClick = true; //是否允许点击dot切换
         this.dotClassName = ''; //锚点类名
@@ -44,8 +44,7 @@ class Carousel {
         this.dotClassName = options.dotClassName;
         this.multi = options.multi;
         options.enableTouch != undefined && (this.enableTouch = options.enableTouch);
-        options.enableTransition != undefined && (this.enableTransition = options.enableTransition);
-        options.enablePosition != undefined && (this.enablePosition = options.enablePosition);
+        options.usePosition != undefined && (this.usePosition = options.usePosition);
         options.enableClick != undefined && (this.enableClick = options.enableClick);
         this.container.style.overflow = "hidden";
         this.wrap.style.whiteSpace = "nowrap";
@@ -55,11 +54,7 @@ class Carousel {
 
         this.initDefault();
 
-        if (this.enableTransition) {
-            this.enablePosition = false;
-        }
-
-        if (this.enablePosition) {
+        if (this.usePosition) {
             this.container.style.position = 'relative';
             this.wrap.style.position = 'absolute';
             this.wrap.style.left = '0';
@@ -72,7 +67,7 @@ class Carousel {
             return;
         }
 
-        if (this.enableTransition) {
+        if (this.useTransition) {
             this._addEvent(this.container, 'webkitTransitionEnd', function() {
                 self.transEnd();
             })
@@ -113,11 +108,11 @@ class Carousel {
     //初始化默认过渡方式
     initDefault() {
         this.prefixStyle = this._getPrefixStyle();
-        if(!this.enableTransition && !this.enablePosition){
+        if(!this.usePosition){
             if (this.prefixStyle.transitionProperty && this.prefixStyle.transform) {
-                this.enableTransition = true;
+                this.useTransition = true;
             } else if (!this.prefixStyle.transform) {
-                this.enablePosition = true;
+                this.usePosition = true;
             }
         }
     }
@@ -143,7 +138,7 @@ class Carousel {
             return;
         }
         if (!num && num != 0) {
-            if (enablePosition) {
+            if (usePosition) {
                 offsetX = this._getComputedStyle('left');
                 offsetX ? (offsetX = Number(offsetX.replace('px', ''))) : offsetX = 0;
             } else {
@@ -202,7 +197,7 @@ class Carousel {
 
         function _stop() {
             self._clearAllTimeoutId();
-            if (!self.enablePosition) {
+            if (!self.usePosition) {
                 self.wrap.style[self.prefixStyle.transitionDuration] = '0ms';
                 var translateX = self._getComputedTranslateX();
                 self.wrap.style[self.prefixStyle.transform] = 'translateX(' + translateX + 'px) translateZ(0)';
@@ -224,7 +219,7 @@ class Carousel {
             self._clearAllTimeoutId();
             self.bannerClick = false;
             startX = event.touches[0].pageX;
-            if (!self.enablePosition) {
+            if (!self.usePosition) {
                 self.wrap.style[self.prefixStyle.transitionDuration] = '0ms';
                 translateX = self._getComputedTranslateX();
                 self.wrap.style[self.prefixStyle.transform] = 'translateX(' + translateX + 'px) translateZ(0)';
@@ -244,14 +239,14 @@ class Carousel {
             var _left = left + dtX > 0 ? 0 : left + dtX;
             _translateX = _translateX < self.parentWidth - self.wrapWidth ? self.parentWidth - self.wrapWidth : _translateX;
             _left = _left < self.parentWidth - self.wrapWidth ? self.parentWidth - self.wrapWidth : _left;
-            if (!self.enablePosition) {
+            if (!self.usePosition) {
                 self.wrap.style[self.prefixStyle.transform] = 'translateX(' + _translateX + 'px) translateZ(0)';
             } else {
                 self.wrap.style.left = _left + 'px';
             }
         })
         this._addEvent(this.container, 'touchend', function(event) {
-            if (!self.enablePosition) {
+            if (!self.usePosition) {
                 translateX = self._getComputedTranslateX();
                 _next(translateX);
             } else {
@@ -324,7 +319,7 @@ class Carousel {
     goToNoTrans(num) {
         var translateX = -num * this.parentWidth;
         this._clearAllTimeoutId();
-        if (!this.enablePosition) {
+        if (!this.usePosition) {
             this.wrap.style[this.prefixStyle.transitionDuration] = '0ms';
             this.wrap.style[this.prefixStyle.transform] = 'translateX(' + translateX + 'px) translateZ(0)';
         } else {
@@ -403,7 +398,7 @@ class Carousel {
             this.direct = 'right';
         }
         this._clearAllTimeoutId();
-        if (this.enablePosition) {
+        if (this.usePosition) {
             offsetX = this._getComputedStyle('left');
             offsetX ? (offsetX = Number(offsetX.replace('px', ''))) : offsetX = 0;
         } else {
@@ -411,7 +406,7 @@ class Carousel {
         }
 
         if (this.preTranslateX != Math.abs(offsetX)) { //过渡动画未完成
-            if (!this.enablePosition) {
+            if (!this.usePosition) {
                 this.wrap.style[this.prefixStyle.transitionDuration] = '0ms';
                 this.wrap.style[this.prefixStyle.transform] = 'translateX(' + offsetX + 'px) translateZ(0)';
             } else {
@@ -467,16 +462,14 @@ class Carousel {
                 left = self.wrap.style.left;
                 left ? left = Number(left.replace('px', '')) : left = 0;
                 left > 0 && (left = 0);
-                if (Math.abs(offsetX - left - dtX) > Math.abs(dtX)) {
+                if (Math.abs(offsetX-left) > Math.abs(dtX)) {
                     left += dtX;
                     dom.style.left = left + 'px';
                     translate();
                     self.activeDot();
                 } else {
-                    rAF(function() {
-                        dom.style.left = offsetX + 'px';;
-                        self.transEnd();
-                    })
+                    dom.style.left = offsetX + 'px';
+                    self.transEnd();
                 }
             })
         }
@@ -484,7 +477,7 @@ class Carousel {
     //x轴平移
     _translateX(translateX) {
         var self = this;
-        if (this.enableTransition) {
+        if (this.useTransition) {
             var time = this.duration * (Math.ceil(Math.abs(-translateX - this._getComputedTranslateX())) / this.parentWidth);
             time = time > this.duration ? this.duration : time;
             this.wrap.style[this.prefixStyle.transitionDuration] = time + 'ms';
