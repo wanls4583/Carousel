@@ -68,16 +68,7 @@ class Carousel {
         }
 
         if (this.useTransition) {
-            this._addEvent(this.container, 'webkitTransitionEnd', function() {
-                self.transEnd();
-            })
-            this._addEvent(this.container, 'transitionend', function() {
-                self.transEnd();
-            })
-            this._addEvent(this.container, 'oTransitionEnd', function() {
-                self.transEnd();
-            })
-            this._addEvent(this.container, 'MSTransitionEnd', function() {
+            this._addEvent(this.container, this.prefixStyle.transitionend, function() {
                 self.transEnd();
             })
         }
@@ -381,8 +372,8 @@ class Carousel {
     }
     //过渡完成回调
     transEnd() {
-        //如果容器已被删除，停止轮播
-        if (!this.wrap.isConnected) {
+        //如果容器已被删除，停止轮播，ie不支持isConnected属性
+        if (!this.wrap.clientWidth) {
             this._clearAllTimeoutId();
             return;
         }
@@ -566,6 +557,7 @@ class Carousel {
             transitionDuration: _prefixStyle('transitionDuration'),
             transitionDelay: _prefixStyle('transitionDelay'),
             transformOrigin: _prefixStyle('transformOrigin'),
+            transitionend: _prefixStyle('transitionend')
         };
         return style;
     }
@@ -575,7 +567,11 @@ class Carousel {
         var style = window.getComputedStyle ? window.getComputedStyle(this.wrap, null) : null || this.wrap.currentStyle;
         var matrix = style[this.prefixStyle.transform];
         if (matrix != 'none') {
-            startX = Number(matrix.replace(/matrix\(|\)/g, '').split(',')[4]);
+            if(matrix.indexOf('matrix3d')!=-1){ //兼容ie
+                startX = Number(matrix.replace(/matrix\(|\)/g, '').split(',')[12]);
+            }else{
+                startX = Number(matrix.replace(/matrix\(|\)/g, '').split(',')[4]);
+            }
         }
         return startX;
     }

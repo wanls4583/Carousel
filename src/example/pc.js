@@ -21,7 +21,7 @@ window.onload = function(){
 	});
 
 	new Carousel({
-		enablePosition: true,
+		usePosition: true,
 		leftArrow: document.querySelector('.d3 .left'),
 		rightArrow: document.querySelector('.d3 .right'),
 		container: document.querySelector('.d3 .carousel'),
