@@ -33,7 +33,7 @@ module.exports = {
             test: /\.js$/,
             loader: 'babel-loader',
             query: {
-              presets: ['es2015']
+                presets: ['es2015']
             },
             include: [resolve('src'), resolve('test')]
         }, {
@@ -46,13 +46,13 @@ module.exports = {
             filename: 'pc.html',
             template: resolve('src/example/pc.html'),
             chunks: ['pc'],
-            inject: true 
+            inject: true
         }),
         new HtmlWebpackPlugin({
             filename: 'mobile.html',
             template: resolve('src/example/mobile.html'),
             chunks: ['mobile'],
-            inject: true 
+            inject: true
         }),
         new CopyWebpackPlugin([{
             from: resolve('src/example/img'),

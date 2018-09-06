@@ -48,6 +48,8 @@ class Carousel {
         options.enableClick != undefined && (this.enableClick = options.enableClick);
         this.container.style.overflow = "hidden";
         this.wrap.style.whiteSpace = "nowrap";
+        this.wrap.style.width = "100%";
+        this.wrap.style.height = "100%";
         this.wrapWidth = this.wrap.scrollWidth;
         this.parentWidth = this.container.clientWidth;
         this.maxCount = Math.ceil(this.wrapWidth / this.parentWidth) - 1;
@@ -68,7 +70,7 @@ class Carousel {
         }
 
         if (this.useTransition) {
-            this._addEvent(this.container, this.prefixStyle.transitionend, function() {
+            this._addEvent(this.container, 'transitionend', function() {
                 self.transEnd();
             })
         }
@@ -98,11 +100,10 @@ class Carousel {
     }
     //初始化默认过渡方式
     initDefault() {
-        this.prefixStyle = this._getPrefixStyle();
         if(!this.usePosition){
-            if (this.prefixStyle.transitionProperty && this.prefixStyle.transform) {
+            if ('transitionProperty' in this.wrap.style) {
                 this.useTransition = true;
-            } else if (!this.prefixStyle.transform) {
+            } else {
                 this.usePosition = true;
             }
         }
@@ -189,11 +190,11 @@ class Carousel {
         function _stop() {
             self._clearAllTimeoutId();
             if (!self.usePosition) {
-                self.wrap.style[self.prefixStyle.transitionDuration] = '0ms';
+                self.wrap.style['transitionDuration'] = '0ms';
                 var translateX = self._getComputedTranslateX();
-                self.wrap.style[self.prefixStyle.transform] = 'translateX(' + translateX + 'px) translateZ(0)';
+                self.wrap.style['transform'] = 'translateX(' + translateX + 'px) translateZ(0)';
             } else {
-                self.wrap.style[self.prefixStyle.transitionDuration] = '0ms';
+                self.wrap.style['transitionDuration'] = '0ms';
                 var left = self._getComputedStyle('left');
                 left ? (left = Number(left.replace('px', ''))) : left = 0;
                 self.wrap.style.left = left + 'px';
@@ -211,11 +212,11 @@ class Carousel {
             self.bannerClick = false;
             startX = event.touches[0].pageX;
             if (!self.usePosition) {
-                self.wrap.style[self.prefixStyle.transitionDuration] = '0ms';
+                self.wrap.style['transitionDuration'] = '0ms';
                 translateX = self._getComputedTranslateX();
-                self.wrap.style[self.prefixStyle.transform] = 'translateX(' + translateX + 'px) translateZ(0)';
+                self.wrap.style['transform'] = 'translateX(' + translateX + 'px) translateZ(0)';
             } else {
-                self.wrap.style[self.prefixStyle.transitionDuration] = '0ms';
+                self.wrap.style['transitionDuration'] = '0ms';
                 left = self._getComputedStyle('left');
                 left ? (left = Number(left.replace('px', ''))) : left = 0;
                 wrap.style.left = left + 'px';
@@ -231,7 +232,7 @@ class Carousel {
             _translateX = _translateX < self.parentWidth - self.wrapWidth ? self.parentWidth - self.wrapWidth : _translateX;
             _left = _left < self.parentWidth - self.wrapWidth ? self.parentWidth - self.wrapWidth : _left;
             if (!self.usePosition) {
-                self.wrap.style[self.prefixStyle.transform] = 'translateX(' + _translateX + 'px) translateZ(0)';
+                self.wrap.style['transform'] = 'translateX(' + _translateX + 'px) translateZ(0)';
             } else {
                 self.wrap.style.left = _left + 'px';
             }
@@ -311,8 +312,8 @@ class Carousel {
         var translateX = -num * this.parentWidth;
         this._clearAllTimeoutId();
         if (!this.usePosition) {
-            this.wrap.style[this.prefixStyle.transitionDuration] = '0ms';
-            this.wrap.style[this.prefixStyle.transform] = 'translateX(' + translateX + 'px) translateZ(0)';
+            this.wrap.style['transitionDuration'] = '0ms';
+            this.wrap.style['transform'] = 'translateX(' + translateX + 'px) translateZ(0)';
         } else {
             this.wrap.style.left = translateX + 'px';
         }
@@ -398,10 +399,10 @@ class Carousel {
 
         if (this.preTranslateX != Math.abs(offsetX)) { //过渡动画未完成
             if (!this.usePosition) {
-                this.wrap.style[this.prefixStyle.transitionDuration] = '0ms';
-                this.wrap.style[this.prefixStyle.transform] = 'translateX(' + offsetX + 'px) translateZ(0)';
+                this.wrap.style['transitionDuration'] = '0ms';
+                this.wrap.style['transform'] = 'translateX(' + offsetX + 'px) translateZ(0)';
             } else {
-                this.wrap.style[this.prefixStyle.transitionDuration] = '0ms';
+                this.wrap.style['transitionDuration'] = '0ms';
                 this.wrap.style.left = offsetX + 'px';
             }
             if(this.carouselCount == this.maxCount && this.multi){
@@ -471,8 +472,8 @@ class Carousel {
         if (this.useTransition) {
             var time = this.duration * (Math.ceil(Math.abs(-translateX - this._getComputedTranslateX())) / this.parentWidth);
             time = time > this.duration ? this.duration : time;
-            this.wrap.style[this.prefixStyle.transitionDuration] = time + 'ms';
-            this.wrap.style[this.prefixStyle.transform] = 'translateX(-' + translateX + 'px) translateZ(0)';
+            this.wrap.style['transitionDuration'] = time + 'ms';
+            this.wrap.style['transform'] = 'translateX(-' + translateX + 'px) translateZ(0)';
             self._startTransition();
             //防止transitionend不响应
             this.transTimer = setTimeout(function() {
@@ -483,7 +484,7 @@ class Carousel {
             left ? (left = Number(left.replace('px', ''))) : left = 0;
             time = this.duration * (Math.ceil(Math.abs(-translateX - left)) / this.parentWidth);
             time = time > this.duration ? this.duration : time;
-            this.wrap.style[this.prefixStyle.transitionDuration] = '0ms';
+            this.wrap.style['transitionDuration'] = '0ms';
             this._position(this.wrap, -translateX, time);
         }
         this.preTranslateX = translateX;
@@ -528,6 +529,7 @@ class Carousel {
         e.preventDefault ? e.preventDefault() : (e.returnValue = false);
     }
     //获取css前缀
+    
     _getPrefixStyle() {
         var _elementStyle = document.createElement('div').style;
 
@@ -537,7 +539,7 @@ class Carousel {
                 i = 0,
                 l = vendors.length;
             for (; i < l; i++) {
-                transform = vendors[i] + 'ransform';
+                transform = vendors[i] + 'ransition';
                 if (transform in _elementStyle) return vendors[i].substr(0, vendors[i].length - 1);
             }
             return false;
@@ -565,7 +567,7 @@ class Carousel {
     _getComputedTranslateX() {
         var startX = 0;
         var style = window.getComputedStyle ? window.getComputedStyle(this.wrap, null) : null || this.wrap.currentStyle;
-        var matrix = style[this.prefixStyle.transform];
+        var matrix = style['transform'];
         if (matrix != 'none') {
             if(matrix.indexOf('matrix3d')!=-1){ //兼容ie
                 startX = Number(matrix.replace(/matrix\(|\)/g, '').split(',')[12]);

@@ -12,7 +12,6 @@ body{
 }
 .wrap{
     font-size: 0;
-    white-space: nowrap;
 }
 .wrap img{
     display: inline-block;
