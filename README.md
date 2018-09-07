@@ -65,9 +65,9 @@ npm run build:prod
 
 请查看[**`example`**](https://github.com/wanls4583/carousel-plugin/tree/master/src/example)
 
-[**`pc oline demo`**](https://blog.lisong.hn.cn/code/carousel-plugin/dist/example/pc.html)
+[**`pc oline demo`**](https://blog.lisong.hn.cn/code/example/carousel-plugin/pc.html)
 
-[**`mobile oline demo`**](https://blog.lisong.hn.cn/code/carousel-plugin/dist/example/mobile.html)
+[**`mobile oline demo`**](https://blog.lisong.hn.cn/code/example/carousel-plugin/mobile.html)
 
 ## config
 
